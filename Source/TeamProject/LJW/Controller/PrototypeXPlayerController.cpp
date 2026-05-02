@@ -5,6 +5,8 @@ APrototypeXPlayerController::APrototypeXPlayerController()
 	:IMC_Player(nullptr)
 	,IA_Move(nullptr)
 	,IA_Look(nullptr)
+	,IA_Jump(nullptr)
+	,IA_Sprint(nullptr)
 {
 
 }

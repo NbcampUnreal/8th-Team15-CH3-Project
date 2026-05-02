@@ -18,6 +18,7 @@ APrototypeXCharacter::APrototypeXCharacter()
 	UCapsuleComponent = GetCapsuleComponent();
 	SkeletalMeshComponent = GetMesh();
 	SkeletalMeshComponent->SetRelativeRotation(PivotRotation);
+
 	SkeletalMeshComponent->SetRelativeLocation(PivotLocation);
 	SpringArmComponent = GameUtil::CreateComponent<USpringArmComponent>(this);
 	SpringArmComponent->TargetArmLength = 300.f;
@@ -29,21 +30,36 @@ APrototypeXCharacter::APrototypeXCharacter()
 	Inter_FinalX = 0;
 	Inter_FinalY = 0;
 	
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = true;  // 마우스 좌우에 따라 캐릭터가 회전하길 원하면 true
+	bUseControllerRotationYaw = false; // = 컨트롤러의 회전을 캐릭터가 상속을 하겠느냐
+	bUseControllerRotationPitch = false; // = False > 따로따로 회전 적용
 	bUseControllerRotationRoll = false;
 
-	// 2. SpringArm이 컨트롤러의 회전(마우스 입력값)을 그대로 따르도록 설정
-	SpringArmComponent->bUsePawnControlRotation = true; // 핵심: 이게 true여야 컨트롤러 값을 가져옵니다.
-	SpringArmComponent->bInheritPitch = true;           // 컨트롤러의 Pitch 반영
-	SpringArmComponent->bInheritYaw = true;             // 컨트롤러의 Yaw 반영
+	// 2. 이동 방향으로 캐릭터가 자동으로 회전하도록 설정
+	GetCharacterMovement()->bOrientRotationToMovement = true; // 핵심: 입력 방향으로 몸을 돌림
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f); // 회전 속도
+	GetCharacterMovement()->MaxAcceleration = 1500.f;
+	// 3. 스프링암 설정 (카메라만 컨트롤러 회전을 따름)
+	SpringArmComponent->bUsePawnControlRotation = true;
+	SpringArmComponent->bInheritPitch = true;
+	SpringArmComponent->bInheritYaw = true;
 	SpringArmComponent->bInheritRoll = false;
+
+	//GetCharacterMovement()->RotationRate = FRotator(0.f, 480.f, 0.f);
+	
+	//===========================================================================================
 	//bUseControllerRotationPitch = false;
+	//bUseControllerRotationYaw = true;  // 마우스 좌우에 따라 캐릭터가 회전하길 원하면 true
 	//bUseControllerRotationRoll = false;
 
-	SpringArmComponent->bEnableCameraRotationLag = true; // 회전 지연 활성화
-	SpringArmComponent->CameraRotationLagSpeed = 10.f;
+	//// 2. SpringArm이 컨트롤러의 회전(마우스 입력값)을 그대로 따르도록 설정
+	//SpringArmComponent->bUsePawnControlRotation = true; // 핵심: 이게 true여야 컨트롤러 값을 가져옵니다.
+	//SpringArmComponent->bInheritPitch = true;           // 컨트롤러의 Pitch 반영
+	//SpringArmComponent->bInheritYaw = true;             // 컨트롤러의 Yaw 반영
+	//SpringArmComponent->bInheritRoll = false;
 
+	//SpringArmComponent->bEnableCameraRotationLag = true; // 회전 지연 활성화
+	//SpringArmComponent->CameraRotationLagSpeed = 10.f;
+	//============================================================================================
 	MouseSensibiliy = 0.5f;
 	//bUseControllerRotationYaw = true;
 	//SpringArmComponent->bUsePawnControlRotation = true;
@@ -62,9 +78,12 @@ APrototypeXCharacter::APrototypeXCharacter()
 	//SpringArmComponent->bInheritRoll = false;
 	//SpringArmComponent->bUsePawnControlRotation = true;
 	//CameraComponent->bUsePawnControlRotation = true;
-	Max_Speed = 400.f;
-	GetCharacterMovement()->MaxWalkSpeed = Max_Speed;
+	Normal_Speed = 500.f;
+	Sprint_Speed = 1000.f;
+	GetCharacterMovement()->MaxWalkSpeed = Normal_Speed;
 
+	GetCharacterMovement()->JumpZVelocity = 600.f;
+	//bIsOnAir = false;
 }
 
 void APrototypeXCharacter::BeginPlay()
@@ -118,6 +137,40 @@ void APrototypeXCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 					&APrototypeXCharacter::Look
 				);
 			}
+
+			if (PlayerController->IA_Jump)
+			{
+				EnhancedInput->BindAction(
+					PlayerController->IA_Jump,
+					ETriggerEvent::Triggered,
+					this,
+					&APrototypeXCharacter::Jump_Start
+				);
+
+				EnhancedInput->BindAction(
+					PlayerController->IA_Jump,
+					ETriggerEvent::Completed,
+					this,
+					&APrototypeXCharacter::Jump_Stop
+				);
+			}
+
+			if (PlayerController->IA_Sprint)
+			{
+				EnhancedInput->BindAction(
+					PlayerController->IA_Sprint,
+					ETriggerEvent::Triggered,
+					this,
+					&APrototypeXCharacter::Sprint_Start
+				);
+
+				EnhancedInput->BindAction(
+					PlayerController->IA_Sprint,
+					ETriggerEvent::Completed,
+					this,
+					&APrototypeXCharacter::Sprint_Stop
+				);
+			}
 		}
 	}
 }
@@ -127,13 +180,21 @@ void APrototypeXCharacter::Move_Start(const FInputActionValue& value)
 	if (!Controller) return;
 	const FVector2D MoveAmount = value.Get<FVector2D>();
 
+	const FRotator Rotation = Controller->GetControlRotation();
+	const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
 	if (!FMath::IsNearlyZero(MoveAmount.X))
 	{
-		AddMovementInput(GetActorForwardVector(), MoveAmount.X * MouseSensibiliy);
+		//AddMovementInput(GetActorForwardVector(), MoveAmount.X);
+		AddMovementInput(ForwardDirection, MoveAmount.X);
 	}
 	if (!FMath::IsNearlyZero(MoveAmount.Y))
 	{
-		AddMovementInput(GetActorRightVector(), MoveAmount.Y);
+		//AddMovementInput(GetActorRightVector(), MoveAmount.Y);
+		AddMovementInput(RightDirection, MoveAmount.Y);
 	}
 }
 
@@ -177,5 +238,27 @@ void APrototypeXCharacter::Inter_Look(float DeltaTime)
 			Inter_FinalY = Inter_LookAmountY;
 		}
 	}
+}
+
+void APrototypeXCharacter::Jump_Start(const FInputActionValue& value)
+{
+	//bIsOnAir = true;
+	Jump();
+}
+
+void APrototypeXCharacter::Jump_Stop(const FInputActionValue& value)
+{
+	//bIsOnAir = false;
+	StopJumping();
+}
+
+void APrototypeXCharacter::Sprint_Start(const FInputActionValue& value)
+{
+	GetCharacterMovement()->MaxWalkSpeed = Sprint_Speed;
+}
+
+void APrototypeXCharacter::Sprint_Stop(const FInputActionValue& value)
+{
+	GetCharacterMovement()->MaxWalkSpeed = Normal_Speed;
 }
 

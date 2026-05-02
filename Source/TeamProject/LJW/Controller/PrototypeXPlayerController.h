@@ -20,6 +20,11 @@ public:
 	TObjectPtr<UInputAction> IA_Move;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inputs")
 	TObjectPtr<UInputAction> IA_Look;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inputs")
+	TObjectPtr<UInputAction> IA_Jump;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inputs")
+	TObjectPtr<UInputAction> IA_Sprint;
+
 protected:
 	virtual void BeginPlay() override;
 
