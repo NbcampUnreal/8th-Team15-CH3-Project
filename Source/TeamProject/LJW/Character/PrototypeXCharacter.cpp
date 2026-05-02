@@ -82,7 +82,11 @@ APrototypeXCharacter::APrototypeXCharacter()
 	Sprint_Speed = 1000.f;
 	GetCharacterMovement()->MaxWalkSpeed = Normal_Speed;
 
-	GetCharacterMovement()->JumpZVelocity = 600.f;
+	Normal_Jump_Speed = 500.f;
+	Max_Jump_Speed = 500.f;
+	Min_Jump_Speed = Normal_Jump_Speed;
+
+	GetCharacterMovement()->JumpZVelocity = Normal_Jump_Speed;
 	//bIsOnAir = false;
 }
 
@@ -181,10 +185,12 @@ void APrototypeXCharacter::Move_Start(const FInputActionValue& value)
 	const FVector2D MoveAmount = value.Get<FVector2D>();
 
 	const FRotator Rotation = Controller->GetControlRotation();
-	const FRotator YawRotation(0, Rotation.Yaw, 0);
+	const FRotator YawRotation(0, Rotation.Yaw, 0); // 컨트롤러의 Yaw(Z축) 추출
 
 	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	// 컨트롤러의 틀어진Yaw축에서 XYZ기즈모를 얻고 X축의 기즈모를 얻음(방향벡터라 크기1)
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+	// 컨트롤러의 틀어진Yaw축에서 XYZ기즈모를 얻고 Y축의 기즈모를 얻음(방향벡터라 크기1)
 
 	if (!FMath::IsNearlyZero(MoveAmount.X))
 	{
@@ -242,14 +248,26 @@ void APrototypeXCharacter::Inter_Look(float DeltaTime)
 
 void APrototypeXCharacter::Jump_Start(const FInputActionValue& value)
 {
-	//bIsOnAir = true;
+	bIsOnJumpping = true;
+	//FVector Velocity = GetCharacterMovement()->Velocity;
+	//float Speed = Velocity.Size2D();
+	//GetCharacterMovement()->JumpZVelocity = 
+	//	FMath::Clamp(Normal_Jump_Speed * (Speed / Normal_Speed), Min_Jump_Speed, Max_Jump_Speed);
 	Jump();
+}
+
+void APrototypeXCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+	bIsOnJumpping = false;
+
 }
 
 void APrototypeXCharacter::Jump_Stop(const FInputActionValue& value)
 {
 	//bIsOnAir = false;
 	StopJumping();
+	GetCharacterMovement()->JumpZVelocity = Normal_Jump_Speed;
 }
 
 void APrototypeXCharacter::Sprint_Start(const FInputActionValue& value)

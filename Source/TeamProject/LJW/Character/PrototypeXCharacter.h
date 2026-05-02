@@ -35,13 +35,19 @@ public:
 
 	float MouseSensibiliy;
 	// ================================
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Velocitys")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Velocitys|Speed")
 	float Normal_Speed;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Velocitys")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Velocitys|Speed")
 	float Sprint_Speed;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Velocitys|Jump")
+	float Normal_Jump_Speed;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Velocitys|Jump")
+	float Max_Jump_Speed;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Velocitys|Jump")
+	float Min_Jump_Speed;
 
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "States")
-	//bool bIsOnAir;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "States")
+	bool bIsOnJumpping;
 
 protected:
 	virtual void BeginPlay() override;
@@ -50,6 +56,7 @@ protected:
 	void Look(const FInputActionValue& value);
 	void Inter_Look(float DeltaTime);
 	void Jump_Start(const FInputActionValue& value);
+	virtual void Landed(const FHitResult& Hit) override;
 	void Jump_Stop(const FInputActionValue& value);
 	void Sprint_Start(const FInputActionValue& value);
 	void Sprint_Stop(const FInputActionValue& value);
