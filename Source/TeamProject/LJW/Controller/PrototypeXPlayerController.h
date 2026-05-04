@@ -24,6 +24,9 @@ public:
 	TObjectPtr<UInputAction> IA_Jump;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inputs")
 	TObjectPtr<UInputAction> IA_Sprint;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inputs")
+	TObjectPtr<UInputAction> IA_Roll;
+
 
 protected:
 	virtual void BeginPlay() override;

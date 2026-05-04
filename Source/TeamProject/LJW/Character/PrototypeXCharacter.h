@@ -11,6 +11,14 @@ class UCameraComponent;
 
 struct FInputActionValue;
 
+class UAnimMontage;
+
+UENUM(BlueprintType)
+enum class EPlayerMode : uint8
+{
+	Normal, Attack
+};
+
 UCLASS()
 class TEAMPROJECT_API APrototypeXCharacter : public ACharacter
 {
@@ -46,7 +54,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Velocitys|Jump")
 	float Min_Jump_Speed;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "States")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "States|Jump")
 	bool bIsOnJumpping;
 
 protected:
@@ -60,6 +68,15 @@ protected:
 	void Jump_Stop(const FInputActionValue& value);
 	void Sprint_Start(const FInputActionValue& value);
 	void Sprint_Stop(const FInputActionValue& value);
+	// enum =======================
+	void SetPlayerMode(EPlayerMode NewMode);
+	void ApplyNormalModeSettings();
+	void ApplyAttackModeSettings();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mode")
+	EPlayerMode CurrentMode;
+	// ============================
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "States|Roll")
+	UAnimMontage* RollMontage;
 
 public:	
 	virtual void Tick(float DeltaTime) override;
