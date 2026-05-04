@@ -9,12 +9,19 @@
 /**
  * 
  */
+
+class UUserWidget;
+
 UCLASS()
 class TEAMPROJECT_API AMainGameMode : public AGameMode
 {
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> GameOverWidgetClass;
 
-	
+public:
+	UFUNCTION(BlueprintCallable)
+	void SetGameOver();
 };
