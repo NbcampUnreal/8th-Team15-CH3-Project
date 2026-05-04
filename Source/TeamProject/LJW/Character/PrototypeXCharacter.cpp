@@ -121,6 +121,40 @@ void APrototypeXCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 					&APrototypeXCharacter::Sprint_Stop
 				);
 			}
+
+			if (PlayerController->IA_Attack)
+			{
+				EnhancedInput->BindAction(
+					PlayerController->IA_Attack,
+					ETriggerEvent::Triggered,
+					this,
+					&APrototypeXCharacter::Attack_Start
+				);
+
+				EnhancedInput->BindAction(
+					PlayerController->IA_Attack,
+					ETriggerEvent::Completed,
+					this,
+					&APrototypeXCharacter::Attack_End
+				);
+			}
+
+			if (PlayerController->IA_Defence)
+			{
+				EnhancedInput->BindAction(
+					PlayerController->IA_Defence,
+					ETriggerEvent::Triggered,
+					this,
+					&APrototypeXCharacter::Defence_Start
+				);
+
+				EnhancedInput->BindAction(
+					PlayerController->IA_Defence,
+					ETriggerEvent::Completed,
+					this,
+					&APrototypeXCharacter::Defence_End
+				);
+			}
 		}
 	}
 }
@@ -220,6 +254,26 @@ void APrototypeXCharacter::Sprint_Start(const FInputActionValue& value)
 void APrototypeXCharacter::Sprint_Stop(const FInputActionValue& value)
 {
 	GetCharacterMovement()->MaxWalkSpeed = Normal_Speed;
+}
+
+void APrototypeXCharacter::Attack_Start(const FInputActionValue& value)
+{
+
+}
+
+void APrototypeXCharacter::Attack_End(const FInputActionValue& value)
+{
+
+}
+
+void APrototypeXCharacter::Defence_Start(const FInputActionValue& value)
+{
+
+}
+
+void APrototypeXCharacter::Defence_End(const FInputActionValue& value)
+{
+
 }
 
 void APrototypeXCharacter::SetPlayerMode(EPlayerMode NewMode)
