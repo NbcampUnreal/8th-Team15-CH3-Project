@@ -3,7 +3,7 @@ Build/
 DerivedDataCache/
 Intermediate/
 Saved/
-Config/DefaultEngine.ini
+Config/DefaultEditorPerProjectUserSettings.ini
 contant/*
 
 !contant/BP_Gamemode
